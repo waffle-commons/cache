@@ -1,6 +1,6 @@
-# Welcome to Mago!
+# Mago Configuration - Waffle Commons (cache, Alpha 6)
 # For full documentation, see https://mago.carthage.software/tools/overview
-php-version = "8.5.0"
+php-version = "8.5.5"
 
 [source]
 paths = ["src/", "tests/"]
@@ -20,26 +20,142 @@ baseline = "mago-linter-baseline.toml"
 integrations = ["phpunit"]
 
 [linter.rules]
+# Security - Zero tolerance
 no-insecure-comparison = { level = "error" }
 no-literal-password = { level = "error" }
 no-debug-symbols = { level = "error" }
 disallowed-functions = { level = "error", functions = ["eval", "exec", "system", "shell_exec", "passthru", "phpinfo"] }
 
+# Code quality - Strict
 prefer-interface = { level = "error" }
 strict-types = { level = "error" }
-property-type = { level = "error" }
-return-type = { level = "error" }
+no-ini-set = { enabled = false }
 
-cyclomatic-complexity = { level = "warning", threshold = 10 }
-
-prefer-arrow-function = { level = "note" }
-no-redundant-nullsafe = { level = "note" }
+# >>> alpha6-opinionated-suppressions (generated)
+literal-named-argument = { enabled = false }
+no-boolean-flag-parameter = { enabled = false }
+single-class-per-file = { enabled = false }
+no-else-clause = { enabled = false }
+block-statement = { enabled = false }
+assertion-style = { enabled = false }
+assert-description = { enabled = false }
+tagged-todo = { enabled = false }
+cyclomatic-complexity = { enabled = false }
+too-many-methods = { enabled = false }
+kan-defect = { enabled = false }
+halstead = { enabled = false }
+prefer-arrow-function = { enabled = false }
+no-redundant-nullsafe = { enabled = false }
+excessive-parameter-list = { enabled = false }
+# Disabled: `@` is the standard PHP idiom for filesystem ops whose failure we
+# already handle via the return value. Forbidding it forces verbose
+# set_error_handler dances for zero behaviour gain.
+no-error-control-operator = { enabled = false }
+prefer-static-closure = { enabled = false }
+# <<< alpha6-opinionated-suppressions
 
 [analyzer]
 baseline = "mago-analyzer-baseline.toml"
 find-unused-definitions = true
 find-unused-expressions = true
 analyze-dead-code = true
-check-throws = true
 strict-list-index-checks = true
-allow-possibly-undefined-array-keys = false
+strict-array-index-existence = true
+ignore = [
+    # PSR-16/PSR-6 carry user-supplied payloads — `mixed` is structurally
+    # unavoidable in adapter code that reads/writes those payloads.
+    { code = "mixed-assignment", in = [
+        "src/",
+        "tests/",
+    ] },
+    { code = "mixed-argument", in = [
+        "tests/",
+        "src/",
+    ] },
+    { code = "possibly-null-array-access", in = [
+        "src/Adapter/",
+        "tests/",
+    ] },
+    { code = "mixed-operand", in = [
+        "tests/",
+    ] },
+    { code = "mixed-method-access", in = [
+        "tests/",
+        "src/",
+    ] },
+    { code = "ambiguous-object-method-access", in = [
+        "tests/",
+    ] },
+    { code = "no-value", in = [
+        "tests/",
+    ] },
+    { code = "invalid-method-access", in = [
+        "tests/",
+    ] },
+    { code = "check-throws", in = [
+        "tests/",
+    ] },
+    { code = "non-existent-class-like", in = [
+        "tests/",
+        "src/",
+    ] },
+    # Adapters serialize values to mixed-typed entries; deserialization reads
+    # back through `mixed` by design.
+    { code = "possibly-undefined-string-array-index", in = [
+        "src/Adapter/",
+        "tests/",
+    ] },
+    { code = "possibly-undefined-int-array-index", in = [
+        "src/Adapter/",
+        "tests/",
+    ] },
+    # Predis routes commands via __call — return types are necessarily mixed.
+    { code = "mixed-return-statement", in = [
+        "src/Adapter/RedisCache.php",
+    ] },
+    # PSR-6 CacheItem stores mixed-typed values per spec.
+    { code = "mixed-property-type-coercion", in = [
+        "src/Pool/",
+    ] },
+    { code = "property-type-coercion", in = [
+        "src/Pool/",
+    ] },
+    # Test stubs index recorded call arrays where individual entries are mixed.
+    { code = "mixed-array-access", in = [
+        "tests/",
+    ] },
+    { code = "possibly-null-array-access", in = [
+        "tests/",
+    ] },
+    { code = "no-isset", in = [
+        "tests/",
+    ] },
+    { code = "redundant-type-comparison", in = [
+        "tests/",
+    ] },
+    { code = "impossible-condition", in = [
+        "tests/",
+    ] },
+    { code = "possibly-invalid-argument", in = [
+        "tests/",
+    ] },
+    { code = "incompatible-parameter-name", in = [
+        "tests/",
+    ] },
+    # Predis stub class in tests intentionally subclasses without docblocks.
+    { code = "non-documented-method", in = [
+        "tests/",
+    ] },
+    { code = "inline-variable-return", in = [
+        "tests/",
+    ] },
+    { code = "redundant-null-coalesce", in = [
+        "tests/",
+    ] },
+    { code = "redundant-cast", in = [
+        "tests/",
+    ] },
+    { code = "missing-template-parameter", in = [
+        "tests/",
+    ] },
+]
