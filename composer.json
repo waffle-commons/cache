@@ -66,15 +66,5 @@
         "allow-plugins": {
             "carthage-software/mago": true
         }
-    },
-    "repositories": [
-        {
-            "type": "path",
-            "canonical": false,
-            "url": "../contracts",
-            "options": {
-                "symlink": true
-            }
-        }
-    ]
+    }
 }
