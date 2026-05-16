@@ -35,16 +35,16 @@ final class FileCache implements CacheInterface, StampedeProtectionInterface
         private readonly ?int $defaultTtl = null,
     ) {
         if (!is_dir($this->baseDir) && !@mkdir($this->baseDir, 0o700, true) && !is_dir($this->baseDir)) {
-            throw new CacheBackendUnavailableException(
-                backend: Constant::BACKEND_FILE,
-                message: sprintf('Cache directory "%s" cannot be created.', $this->baseDir),
-            );
+            throw new CacheBackendUnavailableException(backend: Constant::BACKEND_FILE, message: sprintf(
+                'Cache directory "%s" cannot be created.',
+                $this->baseDir,
+            ));
         }
         if (!is_writable($this->baseDir)) {
-            throw new CacheBackendUnavailableException(
-                backend: Constant::BACKEND_FILE,
-                message: sprintf('Cache directory "%s" is not writable.', $this->baseDir),
-            );
+            throw new CacheBackendUnavailableException(backend: Constant::BACKEND_FILE, message: sprintf(
+                'Cache directory "%s" is not writable.',
+                $this->baseDir,
+            ));
         }
     }
 
@@ -123,10 +123,10 @@ final class FileCache implements CacheInterface, StampedeProtectionInterface
         $ok = true;
         foreach ($values as $key => $value) {
             if (!is_string($key)) {
-                throw new \Waffle\Commons\Cache\Exception\InvalidCacheKeyException(
-                    key: '',
-                    message: sprintf('Cache key must be a string, got %s.', get_debug_type($key)),
-                );
+                throw new \Waffle\Commons\Cache\Exception\InvalidCacheKeyException(key: '', message: sprintf(
+                    'Cache key must be a string, got %s.',
+                    get_debug_type($key),
+                ));
             }
             $ok = $this->set($key, $value, $ttl) && $ok;
         }
@@ -232,8 +232,14 @@ final class FileCache implements CacheInterface, StampedeProtectionInterface
     private function pathFor(string $key): string
     {
         $hash = hash('sha256', $key);
-        return $this->baseDir . DIRECTORY_SEPARATOR . substr($hash, 0, 2)
-            . DIRECTORY_SEPARATOR . substr($hash, 2) . '.cache';
+        return (
+            $this->baseDir
+            . DIRECTORY_SEPARATOR
+            . substr($hash, 0, 2)
+            . DIRECTORY_SEPARATOR
+            . substr($hash, 2)
+            . '.cache'
+        );
     }
 
     private function resolveExpiry(null|int|DateInterval $ttl): ?int

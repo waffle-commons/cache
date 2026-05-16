@@ -35,10 +35,7 @@ final class FileCacheTest extends AbstractTestCase
         new FileCache($this->dir)->set('user.42', ['name' => 'Alice']);
 
         // New instance reading the same dir — verifies file persistence.
-        static::assertSame(
-            ['name' => 'Alice'],
-            new FileCache($this->dir)->get('user.42'),
-        );
+        static::assertSame(['name' => 'Alice'], new FileCache($this->dir)->get('user.42'));
     }
 
     public function testDeleteAndClear(): void

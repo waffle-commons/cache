@@ -1,6 +1,6 @@
 {
     "name": "waffle-commons/cache",
-    "version": "0.1.0-alpha5",
+    "version": "0.1.0-alpha6",
     "description": "Cache component for Waffle framework.",
     "type": "library",
     "license": "MIT",

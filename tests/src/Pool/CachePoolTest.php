@@ -75,7 +75,8 @@ final class CachePoolTest extends AbstractTestCase
         $store = new ArrayCache();
         $pool = new CachePool($store);
 
-        $item = $pool->getItem('soon')
+        $item = $pool
+            ->getItem('soon')
             ->set('v')
             ->expiresAt(new \DateTimeImmutable('-1 second'));
         $pool->save($item);
@@ -87,9 +88,7 @@ final class CachePoolTest extends AbstractTestCase
     public function testCacheItemExpiresAfterAcceptsDateInterval(): void
     {
         $pool = new CachePool(new ArrayCache());
-        $item = $pool->getItem('lives')
-            ->set('v')
-            ->expiresAfter(new DateInterval('PT60S'));
+        $item = $pool->getItem('lives')->set('v')->expiresAfter(new DateInterval('PT60S'));
         $pool->save($item);
 
         static::assertTrue($pool->hasItem('lives'));
@@ -98,10 +97,7 @@ final class CachePoolTest extends AbstractTestCase
     public function testCacheItemExpiresAfterNullClearsExpiration(): void
     {
         $pool = new CachePool(new ArrayCache());
-        $item = $pool->getItem('immortal')
-            ->set('v')
-            ->expiresAfter(60)
-            ->expiresAfter(null);
+        $item = $pool->getItem('immortal')->set('v')->expiresAfter(60)->expiresAfter(null);
         static::assertInstanceOf(CacheItem::class, $item);
         static::assertNull($item->getTtlSeconds());
     }
@@ -123,12 +119,35 @@ final class CachePoolTest extends AbstractTestCase
     public function testSaveRefusesForeignCacheItemImplementations(): void
     {
         $foreign = new class implements \Psr\Cache\CacheItemInterface {
-            public function getKey(): string { return 'k'; }
-            public function get(): mixed { return null; }
-            public function isHit(): bool { return false; }
-            public function set(mixed $value): static { return $this; }
-            public function expiresAt(?\DateTimeInterface $expiration): static { return $this; }
-            public function expiresAfter(null|int|DateInterval $time): static { return $this; }
+            public function getKey(): string
+            {
+                return 'k';
+            }
+
+            public function get(): mixed
+            {
+                return null;
+            }
+
+            public function isHit(): bool
+            {
+                return false;
+            }
+
+            public function set(mixed $value): static
+            {
+                return $this;
+            }
+
+            public function expiresAt(?\DateTimeInterface $expiration): static
+            {
+                return $this;
+            }
+
+            public function expiresAfter(null|int|DateInterval $time): static
+            {
+                return $this;
+            }
         };
 
         static::assertFalse(new CachePool(new ArrayCache())->save($foreign));

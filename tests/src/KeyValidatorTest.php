@@ -28,12 +28,12 @@ final class KeyValidatorTest extends AbstractTestCase
     /** @return iterable<string, array{0: string}> */
     public static function reservedCharProvider(): iterable
     {
-        yield 'brace-open'  => ['user{42}'];
-        yield 'paren'       => ['user(42)'];
+        yield 'brace-open' => ['user{42}'];
+        yield 'paren' => ['user(42)'];
         yield 'forward-slash' => ['user/42'];
-        yield 'backslash'   => ['user\\42'];
-        yield 'at-sign'     => ['user@host'];
-        yield 'colon'       => ['user:42'];
+        yield 'backslash' => ['user\\42'];
+        yield 'at-sign' => ['user@host'];
+        yield 'colon' => ['user:42'];
     }
 
     #[DataProvider('reservedCharProvider')]

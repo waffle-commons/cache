@@ -132,10 +132,10 @@ final class RedisCache implements CacheInterface, StampedeProtectionInterface
         $ok = true;
         foreach ($values as $key => $value) {
             if (!is_string($key)) {
-                throw new \Waffle\Commons\Cache\Exception\InvalidCacheKeyException(
-                    key: '',
-                    message: sprintf('Cache key must be a string, got %s.', get_debug_type($key)),
-                );
+                throw new \Waffle\Commons\Cache\Exception\InvalidCacheKeyException(key: '', message: sprintf(
+                    'Cache key must be a string, got %s.',
+                    get_debug_type($key),
+                ));
             }
             $ok = $this->writeEntry($key, $value, $ttlSeconds, 0.0) && $ok;
         }

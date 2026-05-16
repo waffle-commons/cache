@@ -13,8 +13,7 @@ use Waffle\Commons\Contracts\Cache\Exception\CacheBackendUnavailableExceptionInt
  * Per RFC-013 §4, callers may catch this specifically to fall back to a
  * degraded mode while logging the outage.
  */
-final class CacheBackendUnavailableException extends CacheException implements
-    CacheBackendUnavailableExceptionInterface
+final class CacheBackendUnavailableException extends CacheException implements CacheBackendUnavailableExceptionInterface
 {
     public function __construct(
         private(set) string $backend,

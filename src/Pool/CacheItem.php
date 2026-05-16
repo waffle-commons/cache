@@ -68,9 +68,7 @@ final class CacheItem implements CacheItemInterface
             return $this;
         }
         $now = new DateTimeImmutable();
-        $this->expiration = is_int($time)
-            ? $now->modify('+' . $time . ' seconds')
-            : $now->add($time);
+        $this->expiration = is_int($time) ? $now->modify('+' . $time . ' seconds') : $now->add($time);
         return $this;
     }
 

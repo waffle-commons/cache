@@ -27,25 +27,19 @@ final class KeyValidator
         }
 
         if (strlen($key) > Constant::MAX_KEY_LENGTH) {
-            throw new InvalidCacheKeyException(
-                key: $key,
-                message: sprintf(
-                    'Cache key "%s" exceeds %d characters.',
-                    $key,
-                    Constant::MAX_KEY_LENGTH,
-                ),
-            );
+            throw new InvalidCacheKeyException(key: $key, message: sprintf(
+                'Cache key "%s" exceeds %d characters.',
+                $key,
+                Constant::MAX_KEY_LENGTH,
+            ));
         }
 
         if (strpbrk($key, Constant::RESERVED_CHARACTERS) !== false) {
-            throw new InvalidCacheKeyException(
-                key: $key,
-                message: sprintf(
-                    'Cache key "%s" contains reserved characters (any of "%s").',
-                    $key,
-                    Constant::RESERVED_CHARACTERS,
-                ),
-            );
+            throw new InvalidCacheKeyException(key: $key, message: sprintf(
+                'Cache key "%s" contains reserved characters (any of "%s").',
+                $key,
+                Constant::RESERVED_CHARACTERS,
+            ));
         }
     }
 
@@ -61,10 +55,10 @@ final class KeyValidator
         $validated = [];
         foreach ($keys as $key) {
             if (!is_string($key)) {
-                throw new InvalidCacheKeyException(
-                    key: '',
-                    message: sprintf('Cache key must be a string, got %s.', get_debug_type($key)),
-                );
+                throw new InvalidCacheKeyException(key: '', message: sprintf(
+                    'Cache key must be a string, got %s.',
+                    get_debug_type($key),
+                ));
             }
             self::assertValid($key);
             $validated[] = $key;

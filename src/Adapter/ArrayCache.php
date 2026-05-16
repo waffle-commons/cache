@@ -95,10 +95,10 @@ final class ArrayCache implements CacheInterface
     {
         foreach ($values as $key => $value) {
             if (!is_string($key)) {
-                throw new \Waffle\Commons\Cache\Exception\InvalidCacheKeyException(
-                    key: '',
-                    message: sprintf('Cache key must be a string, got %s.', get_debug_type($key)),
-                );
+                throw new \Waffle\Commons\Cache\Exception\InvalidCacheKeyException(key: '', message: sprintf(
+                    'Cache key must be a string, got %s.',
+                    get_debug_type($key),
+                ));
             }
             $this->set($key, $value, $ttl);
         }

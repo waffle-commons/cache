@@ -107,10 +107,14 @@ final class RedisCacheTest extends AbstractTestCase
     {
         $client = $this->stubClient(getResponse: null);
         $calls = 0;
-        $result = new RedisCache($client)->compute('k', function () use (&$calls): string {
-            $calls++;
-            return 'computed';
-        }, ttl: 60);
+        $result = new RedisCache($client)->compute(
+            'k',
+            function () use (&$calls): string {
+                $calls++;
+                return 'computed';
+            },
+            ttl: 60,
+        );
 
         static::assertSame('computed', $result);
         static::assertSame(1, $calls);
@@ -145,7 +149,8 @@ final class RedisCacheTest extends AbstractTestCase
         ?array $mgetResponse = null,
         ?Throwable $throwOnGet = null,
     ): PredisClient {
-        return new class($getResponse, $existsResponse, $scanResponses, $mgetResponse, $throwOnGet) extends PredisClient {
+        return new class($getResponse, $existsResponse, $scanResponses, $mgetResponse, $throwOnGet) extends
+            PredisClient {
             /** @var array<string, list<array<array-key, mixed>>> */
             public array $calls = [];
 
