@@ -20,8 +20,10 @@ use Waffle\Commons\Contracts\Cache\StampedeProtectionInterface;
  * Redis-backed PSR-16 cache (RFC-013 §3.1).
  *
  * Production-grade adapter for distributed deployments (Sentinel target). Uses
- * Predis (pure-PHP, no ext-redis dependency). Values are serialized via PHP
- * `serialize()` to preserve types across language-level boundaries.
+ * Predis (pure-PHP, no ext-redis dependency). Payloads are JSON-encoded — no
+ * PHP object deserialization, eliminating the Beta-0 audit's RCE vector
+ * (OWASP A08). Trade-off: only JSON-encodable values (scalars, arrays,
+ * stdClass) round-trip.
  *
  * Key prefix lets multiple Waffle apps share the same Redis instance without
  * collisions: e.g. `app:cache:user:42`.
@@ -31,14 +33,14 @@ use Waffle\Commons\Contracts\Cache\StampedeProtectionInterface;
  *
  * @implements StampedeProtectionInterface<mixed>
  */
-final class RedisCache implements CacheInterface, StampedeProtectionInterface
+final readonly class RedisCache implements CacheInterface, StampedeProtectionInterface
 {
     use StampedeAwareTrait;
 
     public function __construct(
-        private readonly PredisClient $client,
-        private readonly string $prefix = 'waffle:cache:',
-        private readonly ?int $defaultTtl = null,
+        private PredisClient $client,
+        private string $prefix = 'waffle:cache:',
+        private ?int $defaultTtl = null,
     ) {}
 
     #[\Override]
@@ -56,7 +58,7 @@ final class RedisCache implements CacheInterface, StampedeProtectionInterface
             return $default;
         }
 
-        $entry = $this->unserialize($raw);
+        $entry = $this->decodePayload($raw);
         return $entry === null ? $default : $entry['value'];
     }
 
@@ -119,7 +121,7 @@ final class RedisCache implements CacheInterface, StampedeProtectionInterface
         $result = [];
         foreach ($validated as $i => $key) {
             $raw = $values[$i] ?? null;
-            $entry = is_string($raw) ? $this->unserialize($raw) : null;
+            $entry = is_string($raw) ? $this->decodePayload($raw) : null;
             $result[$key] = $entry === null ? $default : $entry['value'];
         }
         return $result;
@@ -183,7 +185,7 @@ final class RedisCache implements CacheInterface, StampedeProtectionInterface
         }
 
         if (is_string($raw) && $remainingTtl > 0) {
-            $entry = $this->unserialize($raw);
+            $entry = $this->decodePayload($raw);
             if ($entry !== null) {
                 $expiresAt = time() + $remainingTtl;
                 if (!$this->xfetchShouldRecompute($expiresAt, $entry['delta'], $beta)) {
@@ -201,9 +203,14 @@ final class RedisCache implements CacheInterface, StampedeProtectionInterface
     }
 
     /** @return array{value: mixed, delta: float}|null */
-    private function unserialize(string $raw): ?array
+    private function decodePayload(string $raw): ?array
     {
-        $decoded = @unserialize($raw, ['allowed_classes' => true]);
+        try {
+            /** @var mixed $decoded */
+            $decoded = json_decode($raw, associative: true, flags: JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
         if (!is_array($decoded) || !array_key_exists('value', $decoded)) {
             return null;
         }
@@ -216,7 +223,11 @@ final class RedisCache implements CacheInterface, StampedeProtectionInterface
 
     private function writeEntry(string $key, mixed $value, ?int $ttlSeconds, float $delta): bool
     {
-        $payload = serialize(['value' => $value, 'delta' => $delta]);
+        try {
+            $payload = json_encode(['value' => $value, 'delta' => $delta], JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return false;
+        }
         try {
             if ($ttlSeconds !== null && $ttlSeconds > 0) {
                 $this->client->setex($this->prefix . $key, $ttlSeconds, $payload);

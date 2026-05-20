@@ -21,18 +21,21 @@ use Waffle\Commons\Contracts\Cache\StampedeProtectionInterface;
  *
  * Security: directories created with `0700`, files with `0600` — addresses the
  * `/tmp` RCE risk RFC-013 calls out. Writes are atomic via tempfile + `rename`.
+ * Payloads use JSON (no PHP object deserialization) — eliminates the Beta-0
+ * audit's insecure-deserialization vector (OWASP A08). Trade-off: only
+ * JSON-encodable values (scalars, arrays, stdClass) round-trip.
  *
  * Stampede protection: implemented via {@see StampedeAwareTrait} (XFetch).
  *
  * @implements StampedeProtectionInterface<mixed>
  */
-final class FileCache implements CacheInterface, StampedeProtectionInterface
+final readonly class FileCache implements CacheInterface, StampedeProtectionInterface
 {
     use StampedeAwareTrait;
 
     public function __construct(
-        private readonly string $baseDir,
-        private readonly ?int $defaultTtl = null,
+        private string $baseDir,
+        private ?int $defaultTtl = null,
     ) {
         if (!is_dir($this->baseDir) && !@mkdir($this->baseDir, 0o700, true) && !is_dir($this->baseDir)) {
             throw new CacheBackendUnavailableException(backend: Constant::BACKEND_FILE, message: sprintf(
@@ -197,7 +200,12 @@ final class FileCache implements CacheInterface, StampedeProtectionInterface
             return null;
         }
 
-        $decoded = @unserialize($contents, ['allowed_classes' => true]);
+        try {
+            /** @var mixed $decoded */
+            $decoded = json_decode($contents, associative: true, flags: JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
         if (!is_array($decoded) || !array_key_exists('value', $decoded)) {
             return null;
         }
@@ -220,8 +228,14 @@ final class FileCache implements CacheInterface, StampedeProtectionInterface
             return false;
         }
 
+        try {
+            $payload = json_encode($entry, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return false;
+        }
+
         $tmp = $path . '.' . bin2hex(random_bytes(6)) . '.tmp';
-        $written = @file_put_contents($tmp, serialize($entry), LOCK_EX);
+        $written = @file_put_contents($tmp, $payload, LOCK_EX);
         if ($written === false) {
             return false;
         }

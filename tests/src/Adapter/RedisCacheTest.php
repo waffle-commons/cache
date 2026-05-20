@@ -51,7 +51,7 @@ final class RedisCacheTest extends AbstractTestCase
 
     public function testGetRoundtripsValue(): void
     {
-        $payload = serialize(['value' => 'hello', 'delta' => 0.0]);
+        $payload = json_encode(['value' => 'hello', 'delta' => 0.0], JSON_THROW_ON_ERROR);
         $client = $this->stubClient(getResponse: $payload);
 
         static::assertSame('hello', new RedisCache($client)->get('k'));
@@ -59,7 +59,7 @@ final class RedisCacheTest extends AbstractTestCase
 
     public function testGetReturnsDefaultWhenPayloadCorrupt(): void
     {
-        $client = $this->stubClient(getResponse: 'not-a-serialized-array');
+        $client = $this->stubClient(getResponse: 'not-a-json-array');
         static::assertSame('fb', new RedisCache($client)->get('k', 'fb'));
     }
 
@@ -124,7 +124,7 @@ final class RedisCacheTest extends AbstractTestCase
     public function testGetMultipleReturnsKeyedMap(): void
     {
         $values = [
-            serialize(['value' => 'A', 'delta' => 0.0]),
+            json_encode(['value' => 'A', 'delta' => 0.0], JSON_THROW_ON_ERROR),
             null,
         ];
         $client = $this->stubClient(mgetResponse: $values);
