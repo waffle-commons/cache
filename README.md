@@ -9,6 +9,9 @@
 Waffle Cache Component
 ======================
 
+> **Release:** `v0.1.0-beta1`
+> **PSR Compliance:** PSR-6 (`Psr\Cache`) + PSR-16 (`Psr\SimpleCache`)
+
 PSR-6 and PSR-16 compliant cache implementation for the Waffle Framework. Designed for FrankenPHP resident worker mode — every adapter is stateless across requests, fail-secure, and zero-baseline under Mago static analysis.
 
 ## 📦 Installation
@@ -29,6 +32,7 @@ All adapters implement both `Psr\SimpleCache\CacheInterface` (PSR-16) and route 
 
 ## 🛡️ Hardening features
 
+- **JSON-only payloads (Beta 1):** `FileCache` and `RedisCache` serialize entries with `json_encode` / `json_decode` — **never** PHP `unserialize`. This eliminates the PHP Object Injection → RCE vector (OWASP A08) that native deserialization exposes in a long-lived worker process. JSON parse failures fail-secure (treated as a cache miss). Trade-off: only JSON-encodable values round-trip — objects come back as `stdClass`/arrays.
 - **Stampede protection (`StampedeAwareTrait`):** probabilistic early expiration to prevent thundering-herd misses under high load.
 - **Strict key validation (`KeyValidator`):** enforces the PSR-16 key character set; rejects invalid keys with `InvalidCacheKeyException`.
 - **Stateless adapters:** no per-process mutable state — safe for FrankenPHP worker reuse.
