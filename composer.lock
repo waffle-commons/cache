@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "008a5ea5ac8aeb12bf70947b9c5f8d65",
+    "content-hash": "955860b7e47cab20f2a77cf69c69a6d8",
     "packages": [
         {
             "name": "predis/predis",
@@ -489,7 +489,7 @@
         },
         {
             "name": "waffle-commons/contracts",
-            "version": "0.1.0-beta0",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/waffle-commons/contracts.git",
@@ -519,6 +519,7 @@
                 "phpunit/phpunit": "^12.0",
                 "vimeo/psalm": "^6.13"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -538,7 +539,7 @@
             "description": "Contracts component for Waffle framework.",
             "support": {
                 "issues": "https://github.com/waffle-commons/contracts/issues",
-                "source": "https://github.com/waffle-commons/contracts/tree/0.1.0-beta0"
+                "source": "https://github.com/waffle-commons/contracts/tree/main"
             },
             "time": "2026-05-16T13:54:29+00:00"
         }
@@ -1363,16 +1364,16 @@
         },
         {
             "name": "carthage-software/mago",
-            "version": "1.28.0",
+            "version": "1.29.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/carthage-software/mago.git",
-                "reference": "c3daa7199f83bd06c0077b997358c46e80a0bb06"
+                "reference": "8aab53f6d004f9a6e85128c365d3d28737fdb272"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/carthage-software/mago/zipball/c3daa7199f83bd06c0077b997358c46e80a0bb06",
-                "reference": "c3daa7199f83bd06c0077b997358c46e80a0bb06",
+                "url": "https://api.github.com/repos/carthage-software/mago/zipball/8aab53f6d004f9a6e85128c365d3d28737fdb272",
+                "reference": "8aab53f6d004f9a6e85128c365d3d28737fdb272",
                 "shasum": ""
             },
             "require": {
@@ -1410,7 +1411,7 @@
             ],
             "support": {
                 "issues": "https://github.com/carthage-software/mago/issues",
-                "source": "https://github.com/carthage-software/mago/tree/1.28.0"
+                "source": "https://github.com/carthage-software/mago/tree/1.29.0"
             },
             "funding": [
                 {
@@ -1418,7 +1419,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-05-19T07:03:29+00:00"
+            "time": "2026-05-23T18:53:33+00:00"
         },
         {
             "name": "composer/pcre",
@@ -6055,7 +6056,7 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "carthage-software/mago": 10,
-        "waffle-commons/contracts": 10
+        "waffle-commons/contracts": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
