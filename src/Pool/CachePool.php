@@ -8,6 +8,7 @@ use Psr\Cache\CacheItemInterface;
 use Waffle\Commons\Cache\KeyValidator;
 use Waffle\Commons\Contracts\Cache\CacheInterface;
 use Waffle\Commons\Contracts\Cache\CacheItemPoolInterface;
+use Waffle\Commons\Contracts\Service\ResettableInterface;
 
 /**
  * PSR-6 pool that wraps any Waffle PSR-16 `CacheInterface`.
@@ -18,7 +19,7 @@ use Waffle\Commons\Contracts\Cache\CacheItemPoolInterface;
  *
  * Deferred items live in-memory until `commit()` (or `__destruct`) flushes them.
  */
-final class CachePool implements CacheItemPoolInterface
+final class CachePool implements CacheItemPoolInterface, ResettableInterface
 {
     /** @var array<string, CacheItem> */
     private array $deferred = [];
@@ -121,5 +122,18 @@ final class CachePool implements CacheItemPoolInterface
         }
         $this->deferred = [];
         return $ok;
+    }
+
+    /**
+     * Flushes pending deferred writes (mirrors __destruct), then drops the
+     * request-scoped buffer so nothing bleeds into the next worker iteration.
+     */
+    #[\Override]
+    public function reset(): void
+    {
+        if ($this->deferred !== []) {
+            $this->commit();
+        }
+        $this->deferred = [];
     }
 }

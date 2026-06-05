@@ -8,6 +8,7 @@ use DateInterval;
 use DateTimeImmutable;
 use Waffle\Commons\Cache\KeyValidator;
 use Waffle\Commons\Contracts\Cache\CacheInterface;
+use Waffle\Commons\Contracts\Service\ResettableInterface;
 
 /**
  * In-memory, worker-scoped PSR-16 cache (RFC-013 §3.1).
@@ -19,7 +20,7 @@ use Waffle\Commons\Contracts\Cache\CacheInterface;
  *
  * Not stampede-protected: single-worker memory has no concurrent contention.
  */
-final class ArrayCache implements CacheInterface
+final class ArrayCache implements CacheInterface, ResettableInterface
 {
     /**
      * @var array<string, array{value: mixed, expires: int|null}>
@@ -53,7 +54,7 @@ final class ArrayCache implements CacheInterface
     }
 
     #[\Override]
-    public function set(string $key, mixed $value, null|int|DateInterval $ttl = null): bool
+    public function set(string $key, mixed $value, int|DateInterval|null $ttl = null): bool
     {
         KeyValidator::assertValid($key);
 
@@ -79,6 +80,16 @@ final class ArrayCache implements CacheInterface
         return true;
     }
 
+    /**
+     * Clears the worker-scoped store between requests (RFC-013 §3.1), so cached
+     * values from one request never leak into the next worker iteration.
+     */
+    #[\Override]
+    public function reset(): void
+    {
+        $this->store = [];
+    }
+
     #[\Override]
     public function getMultiple(iterable $keys, mixed $default = null): iterable
     {
@@ -91,7 +102,7 @@ final class ArrayCache implements CacheInterface
     }
 
     #[\Override]
-    public function setMultiple(iterable $values, null|int|DateInterval $ttl = null): bool
+    public function setMultiple(iterable $values, int|DateInterval|null $ttl = null): bool
     {
         foreach ($values as $key => $value) {
             if (!is_string($key)) {
@@ -121,7 +132,7 @@ final class ArrayCache implements CacheInterface
     }
 
     /** Converts a PSR-16 TTL spec to an absolute expiry timestamp (or null = never). */
-    private function resolveExpiry(null|int|DateInterval $ttl): ?int
+    private function resolveExpiry(int|DateInterval|null $ttl): ?int
     {
         if ($ttl === null) {
             return $this->defaultTtl === null ? null : time() + $this->defaultTtl;
