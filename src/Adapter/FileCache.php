@@ -68,7 +68,7 @@ final readonly class FileCache implements CacheInterface, StampedeProtectionInte
     }
 
     #[\Override]
-    public function set(string $key, mixed $value, null|int|DateInterval $ttl = null): bool
+    public function set(string $key, mixed $value, int|DateInterval|null $ttl = null): bool
     {
         KeyValidator::assertValid($key);
 
@@ -121,7 +121,7 @@ final readonly class FileCache implements CacheInterface, StampedeProtectionInte
     }
 
     #[\Override]
-    public function setMultiple(iterable $values, null|int|DateInterval $ttl = null): bool
+    public function setMultiple(iterable $values, int|DateInterval|null $ttl = null): bool
     {
         $ok = true;
         foreach ($values as $key => $value) {
@@ -256,7 +256,7 @@ final readonly class FileCache implements CacheInterface, StampedeProtectionInte
         );
     }
 
-    private function resolveExpiry(null|int|DateInterval $ttl): ?int
+    private function resolveExpiry(int|DateInterval|null $ttl): ?int
     {
         if ($ttl === null) {
             return $this->defaultTtl === null ? null : time() + $this->defaultTtl;

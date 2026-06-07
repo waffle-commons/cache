@@ -10,7 +10,7 @@
 Waffle Cache Component
 ======================
 
-> **Release:** `v0.1.0-beta2` &nbsp;|&nbsp; [`CHANGELOG.md`](./CHANGELOG.md)
+> **Release:** `0.1.0-beta3` &nbsp;|&nbsp; [`CHANGELOG.md`](./CHANGELOG.md)
 > **PSR Compliance:** PSR-6 (`Psr\Cache`) + PSR-16 (`Psr\SimpleCache`)
 
 PSR-6 and PSR-16 compliant cache implementation for the Waffle Framework. Designed for FrankenPHP resident worker mode — every adapter is stateless across requests, fail-secure, and zero-baseline under Mago static analysis.

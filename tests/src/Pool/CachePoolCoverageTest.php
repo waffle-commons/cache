@@ -62,7 +62,7 @@ final class CachePoolCoverageTest extends AbstractTestCase
                 return $this;
             }
 
-            public function expiresAfter(null|int|DateInterval $time): static
+            public function expiresAfter(int|DateInterval|null $time): static
             {
                 return $this;
             }

@@ -144,12 +144,36 @@ final class CachePoolTest extends AbstractTestCase
                 return $this;
             }
 
-            public function expiresAfter(null|int|DateInterval $time): static
+            public function expiresAfter(int|DateInterval|null $time): static
             {
                 return $this;
             }
         };
 
         static::assertFalse(new CachePool(new ArrayCache())->save($foreign));
+    }
+
+    public function testResetFlushesDeferredThenClearsBuffer(): void
+    {
+        $store = new ArrayCache();
+        $pool = new CachePool($store);
+        $pool->saveDeferred($pool->getItem('answer')->set(42));
+
+        // The deferred write has not yet reached the backing store.
+        static::assertFalse($store->has('answer'));
+
+        $pool->reset();
+
+        // reset() committed the pending write to the backing store...
+        static::assertSame(42, $store->get('answer'));
+        // ...and emptied the deferred buffer (a follow-up commit persists nothing new).
+        static::assertTrue($pool->commit());
+    }
+
+    public function testResetWithoutDeferredIsNoop(): void
+    {
+        $pool = new CachePool(new ArrayCache());
+        $pool->reset();
+        static::assertTrue($pool->commit());
     }
 }

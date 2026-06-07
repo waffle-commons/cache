@@ -107,4 +107,16 @@ final class ArrayCacheTest extends AbstractTestCase
         $this->expectException(InvalidCacheKeyException::class);
         new ArrayCache()->setMultiple([42 => 'value']);
     }
+
+    public function testResetClearsStoreBetweenRequests(): void
+    {
+        $cache = new ArrayCache();
+        $cache->set('user.42', ['name' => 'Alice']);
+        static::assertTrue($cache->has('user.42'));
+
+        $cache->reset();
+
+        static::assertFalse($cache->has('user.42'));
+        static::assertSame('fallback', $cache->get('user.42', 'fallback'));
+    }
 }

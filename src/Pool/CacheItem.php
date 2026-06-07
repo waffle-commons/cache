@@ -48,7 +48,9 @@ final class CacheItem implements CacheItemInterface
     #[\Override]
     public function set(mixed $value): static
     {
+        // @igor-ignore: PSR-6 mutable value object (created per key in CachePool, never shared across requests)
         $this->value = $value;
+        // @igor-ignore: PSR-6 mutable value object (created per key in CachePool, never shared across requests)
         $this->hit = true;
         return $this;
     }
@@ -56,18 +58,21 @@ final class CacheItem implements CacheItemInterface
     #[\Override]
     public function expiresAt(?DateTimeInterface $expiration): static
     {
+        // @igor-ignore: PSR-6 mutable value object (created per key in CachePool, never shared across requests)
         $this->expiration = $expiration;
         return $this;
     }
 
     #[\Override]
-    public function expiresAfter(null|int|DateInterval $time): static
+    public function expiresAfter(int|DateInterval|null $time): static
     {
         if ($time === null) {
+            // @igor-ignore: PSR-6 mutable value object (created per key in CachePool, never shared across requests)
             $this->expiration = null;
             return $this;
         }
         $now = new DateTimeImmutable();
+        // @igor-ignore: PSR-6 mutable value object (created per key in CachePool, never shared across requests)
         $this->expiration = is_int($time) ? $now->modify('+' . $time . ' seconds') : $now->add($time);
         return $this;
     }

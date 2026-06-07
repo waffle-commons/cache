@@ -63,7 +63,7 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     }
 
     #[\Override]
-    public function set(string $key, mixed $value, null|int|DateInterval $ttl = null): bool
+    public function set(string $key, mixed $value, int|DateInterval|null $ttl = null): bool
     {
         KeyValidator::assertValid($key);
 
@@ -128,7 +128,7 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     }
 
     #[\Override]
-    public function setMultiple(iterable $values, null|int|DateInterval $ttl = null): bool
+    public function setMultiple(iterable $values, int|DateInterval|null $ttl = null): bool
     {
         $ttlSeconds = $this->resolveTtlSeconds($ttl);
         $ok = true;
@@ -240,7 +240,7 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
         return true;
     }
 
-    private function resolveTtlSeconds(null|int|DateInterval $ttl): ?int
+    private function resolveTtlSeconds(int|DateInterval|null $ttl): ?int
     {
         if ($ttl === null) {
             return $this->defaultTtl;
