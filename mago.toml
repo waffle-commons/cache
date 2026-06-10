@@ -34,6 +34,8 @@ namespace = "Waffle\\Commons\\Cache"
 permit = [
     "Waffle\\Commons\\Cache\\**",
     "Waffle\\Commons\\Contracts\\**",
+    # Worker-safety audit tooling (igor-php 0.7+): dev-only #[WorkerSafe] metadata, inert at runtime.
+    "IgorPhp\\IgorBundle\\Attribute\\**",
     "@layer:core",
     "@layer:psr",
     "@layer:predis",
