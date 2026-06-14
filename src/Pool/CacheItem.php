@@ -7,6 +7,7 @@ namespace Waffle\Commons\Cache\Pool;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
+use IgorPhp\IgorBundle\Attribute\WorkerSafe;
 use Psr\Cache\CacheItemInterface;
 
 /**
@@ -18,12 +19,15 @@ use Psr\Cache\CacheItemInterface;
  */
 final class CacheItem implements CacheItemInterface
 {
+    #[WorkerSafe(reason: 'PSR-6 mutable value object; created per key in CachePool, never shared across requests')]
     private mixed $value = null;
 
+    #[WorkerSafe(reason: 'PSR-6 mutable value object; created per key in CachePool, never shared across requests')]
     private ?DateTimeInterface $expiration = null;
 
     public function __construct(
         private readonly string $key,
+        #[WorkerSafe(reason: 'PSR-6 mutable value object; created per key in CachePool, never shared across requests')]
         private bool $hit = false,
     ) {}
 
@@ -48,9 +52,7 @@ final class CacheItem implements CacheItemInterface
     #[\Override]
     public function set(mixed $value): static
     {
-        // @igor-ignore: PSR-6 mutable value object (created per key in CachePool, never shared across requests)
         $this->value = $value;
-        // @igor-ignore: PSR-6 mutable value object (created per key in CachePool, never shared across requests)
         $this->hit = true;
         return $this;
     }
@@ -58,7 +60,6 @@ final class CacheItem implements CacheItemInterface
     #[\Override]
     public function expiresAt(?DateTimeInterface $expiration): static
     {
-        // @igor-ignore: PSR-6 mutable value object (created per key in CachePool, never shared across requests)
         $this->expiration = $expiration;
         return $this;
     }
@@ -67,12 +68,10 @@ final class CacheItem implements CacheItemInterface
     public function expiresAfter(int|DateInterval|null $time): static
     {
         if ($time === null) {
-            // @igor-ignore: PSR-6 mutable value object (created per key in CachePool, never shared across requests)
             $this->expiration = null;
             return $this;
         }
         $now = new DateTimeImmutable();
-        // @igor-ignore: PSR-6 mutable value object (created per key in CachePool, never shared across requests)
         $this->expiration = is_int($time) ? $now->modify('+' . $time . ' seconds') : $now->add($time);
         return $this;
     }

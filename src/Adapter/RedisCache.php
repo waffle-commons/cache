@@ -15,6 +15,8 @@ use Waffle\Commons\Cache\Trait\StampedeAwareTrait;
 use Waffle\Commons\Contracts\Cache\CacheInterface;
 use Waffle\Commons\Contracts\Cache\Constant;
 use Waffle\Commons\Contracts\Cache\StampedeProtectionInterface;
+use Waffle\Commons\Contracts\Data\Connection\ConnectionKind;
+use Waffle\Commons\Contracts\Data\Connection\ConnectionTrackerInterface;
 
 /**
  * Redis-backed PSR-16 cache (RFC-013 §3.1).
@@ -41,11 +43,24 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
         private PredisClient $client,
         private string $prefix = 'waffle:cache:',
         private ?int $defaultTtl = null,
+        private ?ConnectionTrackerInterface $tracker = null,
     ) {}
+
+    /**
+     * DIAG-03: surface the worker-resident Redis connection to the tracer when one
+     * is wired (dev only). The connection is persistent — never closed per request
+     * — so the listener reports it informationally, not as a leak. Idempotent: keyed
+     * by the Predis client identity.
+     */
+    private function markConnection(): void
+    {
+        $this->tracker?->trackOpen('redis:' . spl_object_id($this->client), ConnectionKind::Redis);
+    }
 
     #[\Override]
     public function get(string $key, mixed $default = null): mixed
     {
+        $this->markConnection();
         KeyValidator::assertValid($key);
 
         try {
@@ -65,6 +80,7 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     #[\Override]
     public function set(string $key, mixed $value, int|DateInterval|null $ttl = null): bool
     {
+        $this->markConnection();
         KeyValidator::assertValid($key);
 
         return $this->writeEntry($key, $value, $this->resolveTtlSeconds($ttl), 0.0);
@@ -73,6 +89,7 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     #[\Override]
     public function delete(string $key): bool
     {
+        $this->markConnection();
         KeyValidator::assertValid($key);
 
         try {
@@ -86,6 +103,8 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     #[\Override]
     public function clear(): bool
     {
+        $this->markConnection();
+
         try {
             $cursor = 0;
             do {
@@ -106,6 +125,7 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     #[\Override]
     public function getMultiple(iterable $keys, mixed $default = null): iterable
     {
+        $this->markConnection();
         $validated = KeyValidator::assertValidAll($keys);
         if ($validated === []) {
             return [];
@@ -130,6 +150,7 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     #[\Override]
     public function setMultiple(iterable $values, int|DateInterval|null $ttl = null): bool
     {
+        $this->markConnection();
         $ttlSeconds = $this->resolveTtlSeconds($ttl);
         $ok = true;
         foreach ($values as $key => $value) {
@@ -147,6 +168,7 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     #[\Override]
     public function deleteMultiple(iterable $keys): bool
     {
+        $this->markConnection();
         $validated = KeyValidator::assertValidAll($keys);
         if ($validated === []) {
             return true;
@@ -163,6 +185,7 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     #[\Override]
     public function has(string $key): bool
     {
+        $this->markConnection();
         KeyValidator::assertValid($key);
 
         try {
@@ -175,6 +198,7 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     #[\Override]
     public function compute(string $key, callable $callback, int $ttl, float $beta = Constant::DEFAULT_BETA): mixed
     {
+        $this->markConnection();
         KeyValidator::assertValid($key);
 
         try {

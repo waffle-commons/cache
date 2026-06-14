@@ -12,6 +12,7 @@ use Waffle\Commons\Cache\Adapter\RedisCache;
 use Waffle\Commons\Cache\Exception\CacheBackendUnavailableException;
 use Waffle\Commons\Contracts\Cache\CacheInterface;
 use Waffle\Commons\Contracts\Cache\Constant;
+use Waffle\Commons\Contracts\Data\Connection\ConnectionTrackerInterface;
 
 /**
  * Builds a concrete PSR-16 cache adapter from a backend identifier and a flat options array.
@@ -26,6 +27,14 @@ use Waffle\Commons\Contracts\Cache\Constant;
  */
 final class CacheFactory
 {
+    /**
+     * @param ?ConnectionTrackerInterface $tracker DIAG-03 tracer forwarded to the Redis
+     *        adapter so its worker-resident connection is surfaced (dev only; null = off).
+     */
+    public function __construct(
+        private readonly ?ConnectionTrackerInterface $tracker = null,
+    ) {}
+
     /**
      * @param array<string, mixed> $options Adapter-specific configuration.
      *   - array  : `default_ttl?: int`
@@ -79,6 +88,7 @@ final class CacheFactory
             client: new PredisClient($parameters),
             prefix: $prefix,
             defaultTtl: $this->intOrNull($options, 'default_ttl'),
+            tracker: $this->tracker,
         );
     }
 

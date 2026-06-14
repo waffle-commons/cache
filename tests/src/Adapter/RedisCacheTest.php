@@ -10,6 +10,8 @@ use Predis\PredisException;
 use Throwable;
 use Waffle\Commons\Cache\Adapter\RedisCache;
 use Waffle\Commons\Cache\Exception\CacheBackendUnavailableException;
+use Waffle\Commons\Contracts\Data\Connection\ConnectionKind;
+use Waffle\Commons\Contracts\Data\Connection\ConnectionTrackerInterface;
 use WaffleTests\Commons\Cache\AbstractTestCase;
 
 /**
@@ -136,6 +138,69 @@ final class RedisCacheTest extends AbstractTestCase
         );
 
         static::assertSame(['a' => 'A', 'b' => 'fb'], $result);
+    }
+
+    public function testGetSurfacesTheRedisConnectionToTheTracker(): void
+    {
+        $tracker = $this->recordingTracker();
+        new RedisCache($this->stubClient(getResponse: null), tracker: $tracker)->get('k', 'fb');
+
+        $open = $tracker->openConnections();
+        static::assertCount(1, $open);
+        static::assertSame(ConnectionKind::Redis, $open[0]['kind'] ?? null);
+    }
+
+    public function testSetSurfacesTheRedisConnectionToTheTracker(): void
+    {
+        $tracker = $this->recordingTracker();
+        new RedisCache($this->stubClient(), tracker: $tracker)->set('k', 'v', 60);
+
+        static::assertCount(1, $tracker->openConnections());
+    }
+
+    public function testWithoutTrackerNothingIsRecorded(): void
+    {
+        // The default (null) tracker path must be a no-op.
+        $result = new RedisCache($this->stubClient(getResponse: null))->get('k', 'fb');
+
+        static::assertSame('fb', $result);
+    }
+
+    private function recordingTracker(): ConnectionTrackerInterface
+    {
+        return new class implements ConnectionTrackerInterface {
+            /** @var array<string, ConnectionKind> */
+            private array $open = [];
+
+            #[\Override]
+            public function trackOpen(string $id, ConnectionKind $kind): void
+            {
+                $this->open[$id] = $kind;
+            }
+
+            #[\Override]
+            public function trackClose(string $id): void
+            {
+                unset($this->open[$id]);
+            }
+
+            #[\Override]
+            public function openConnections(): array
+            {
+                $connections = [];
+                foreach ($this->open as $id => $kind) {
+                    $connections[] = ['id' => $id, 'kind' => $kind];
+                }
+
+                return $connections;
+            }
+
+            #[\Override]
+            public function reset(): void
+            {
+                $this->open = [];
+            }
+        };
     }
 
     /**
