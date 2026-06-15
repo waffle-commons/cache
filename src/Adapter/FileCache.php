@@ -37,7 +37,11 @@ final readonly class FileCache implements CacheInterface, StampedeProtectionInte
         private string $baseDir,
         private ?int $defaultTtl = null,
     ) {
-        if (!is_dir($this->baseDir) && !@mkdir($this->baseDir, 0o700, true) && !is_dir($this->baseDir)) {
+        if (
+            !is_dir($this->baseDir)
+            && !$this->attempt(fn(): bool => mkdir($this->baseDir, 0o700, true))
+            && !is_dir($this->baseDir)
+        ) {
             throw new CacheBackendUnavailableException(backend: Constant::BACKEND_FILE, message: sprintf(
                 'Cache directory "%s" cannot be created.',
                 $this->baseDir,
@@ -88,7 +92,8 @@ final readonly class FileCache implements CacheInterface, StampedeProtectionInte
         if (!is_file($path)) {
             return true;
         }
-        return @unlink($path);
+
+        return $this->attempt(fn(): bool => unlink($path));
     }
 
     #[\Override]
@@ -105,7 +110,8 @@ final readonly class FileCache implements CacheInterface, StampedeProtectionInte
             if (!$entry instanceof \SplFileInfo) {
                 continue;
             }
-            $entry->isDir() ? @rmdir($entry->getPathname()) : @unlink($entry->getPathname());
+            $path = $entry->getPathname();
+            $entry->isDir() ? $this->attempt(fn(): bool => rmdir($path)) : $this->attempt(fn(): bool => unlink($path));
         }
         return true;
     }
@@ -195,7 +201,7 @@ final readonly class FileCache implements CacheInterface, StampedeProtectionInte
             return null;
         }
 
-        $contents = @file_get_contents($path);
+        $contents = $this->readFile($path);
         if ($contents === false) {
             return null;
         }
@@ -224,7 +230,7 @@ final readonly class FileCache implements CacheInterface, StampedeProtectionInte
     {
         $path = $this->pathFor($key);
         $dir = dirname($path);
-        if (!is_dir($dir) && !@mkdir($dir, 0o700, true) && !is_dir($dir)) {
+        if (!is_dir($dir) && !$this->attempt(fn(): bool => mkdir($dir, 0o700, true)) && !is_dir($dir)) {
             return false;
         }
 
@@ -235,12 +241,45 @@ final readonly class FileCache implements CacheInterface, StampedeProtectionInte
         }
 
         $tmp = $path . '.' . bin2hex(random_bytes(6)) . '.tmp';
-        $written = @file_put_contents($tmp, $payload, LOCK_EX);
-        if ($written === false) {
+        if (!$this->attempt(fn(): bool => file_put_contents($tmp, $payload, LOCK_EX) !== false)) {
             return false;
         }
-        @chmod($tmp, 0o600);
-        return @rename($tmp, $path);
+        $this->attempt(fn(): bool => chmod($tmp, 0o600));
+
+        return $this->attempt(fn(): bool => rename($tmp, $path));
+    }
+
+    /**
+     * Run a filesystem primitive with PHP warnings neutralised WITHOUT the `@`
+     * operator (POLICY-05 / zero-baseline): a scoped handler swallows the native
+     * warning while failure still surfaces through the returned bool.
+     *
+     * @param callable(): bool $op
+     */
+    private function attempt(callable $op): bool
+    {
+        set_error_handler(static fn(): bool => true);
+
+        try {
+            return $op();
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    /**
+     * Read a file with warnings neutralised WITHOUT the `@` operator (POLICY-05);
+     * returns false on failure exactly as file_get_contents() does.
+     */
+    private function readFile(string $path): string|false
+    {
+        set_error_handler(static fn(): bool => true);
+
+        try {
+            return file_get_contents($path);
+        } finally {
+            restore_error_handler();
+        }
     }
 
     private function pathFor(string $key): string
