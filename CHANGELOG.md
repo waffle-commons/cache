@@ -5,6 +5,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Released in lockstep with the Waffle Commons umbrella tag.
 
+## [0.1.0-beta5] — 2026-06-26
+
+**Theme: zero-suppression filesystem handling.**
+
+### Changed
+- `Adapter\FileCache` no longer uses the `@` error-suppression operator anywhere — all 8 suppressed filesystem call sites (`mkdir` ×2, `unlink` ×2, `rmdir`, `file_get_contents`, `file_put_contents`, `chmod`, `rename`) now route through two scoped private helpers: `attempt()` (runs a `callable(): bool` primitive) and `readFile()` (mirrors `file_get_contents()`'s `string|false` return). Each installs a transient `set_error_handler()` that neutralises the native warning and is always torn down via `finally`/`restore_error_handler()`; failure still surfaces through the return value, so directory-creation and write paths keep their fail-secure behaviour (POLICY-05 / zero-baseline).
+- Enabled the `cyclomatic-complexity` Mago lint rule with a `threshold = 50` (was disabled), tightening the static-analysis perimeter for this component.
+
 ## [0.1.0-beta4] — 2026-06-13
 
 **Theme: worker-mode diagnostics.**
