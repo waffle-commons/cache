@@ -85,6 +85,12 @@ docker exec -w /waffle-commons/cache waffle-dev composer tests
 
 PHPUnit 11+ suite targets `>= 95%` line coverage.
 
+## 📚 Documentation
+
+Central framework docs live in the [waffle-commons/documentation](https://github.com/waffle-commons/documentation) repository:
+
+- Reference: [cache](https://github.com/waffle-commons/documentation/blob/main/reference/cache.md)
+
 ## 🤝 Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md). All contributions must respect the Mago Purge Protocol (zero baselines) and the FrankenPHP statelessness contract.
