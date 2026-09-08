@@ -1,6 +1,6 @@
 {
     "name": "waffle-commons/cache",
-    "description": "Cache component for Waffle framework.",
+    "description": "PSR-6 and PSR-16 caching for Waffle Commons: a worker-safe pool and simple-cache facade with pluggable stores.",
     "type": "library",
     "license": "MIT",
     "autoload": {

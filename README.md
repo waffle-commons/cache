@@ -10,7 +10,7 @@
 Waffle Cache Component
 ======================
 
-> **Release:** `0.1.0-beta5` &nbsp;|&nbsp; [`CHANGELOG.md`](./CHANGELOG.md)
+> **Release:** `0.1.0-beta6` &nbsp;|&nbsp; [`CHANGELOG.md`](./CHANGELOG.md)
 > **PSR Compliance:** PSR-6 (`Psr\Cache`) + PSR-16 (`Psr\SimpleCache`)
 
 PSR-6 and PSR-16 compliant cache implementation for the Waffle Framework. Designed for FrankenPHP resident worker mode — every adapter is stateless across requests, fail-secure, and zero-baseline under Mago static analysis.
@@ -84,6 +84,12 @@ docker exec -w /waffle-commons/cache waffle-dev composer tests
 ```
 
 PHPUnit 11+ suite targets `>= 95%` line coverage.
+
+## 📚 Documentation
+
+Central framework docs live in the [waffle-commons/documentation](https://github.com/waffle-commons/documentation) repository:
+
+- Reference: [cache](https://github.com/waffle-commons/documentation/blob/main/reference/cache.md)
 
 ## 🤝 Contributing
 
