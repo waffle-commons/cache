@@ -5,7 +5,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Released in lockstep with the Waffle Commons umbrella tag.
 
-## [Unreleased]
+## [0.1.0-beta7] — 2026-11
+
+**Theme: readiness probe (OPS-01).**
 
 ### Added
 - `Health\CacheHealthCheck` (OPS-01, RFC-023 §3.3) — the `/readyz` probe for a cache backend: one `has()` on a fixed key, a single read round trip and never a write. A Redis-backed cache that cannot reach Redis is reported down with the reason, never thrown. Not critical by default; an application that cannot serve without its cache makes it critical or lists it in `waffle.health.required`.
