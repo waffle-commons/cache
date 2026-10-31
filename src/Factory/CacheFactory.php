@@ -6,6 +6,7 @@ namespace Waffle\Commons\Cache\Factory;
 
 use InvalidArgumentException;
 use Predis\Client as PredisClient;
+use Predis\Connection\Parameters;
 use Waffle\Commons\Cache\Adapter\ArrayCache;
 use Waffle\Commons\Cache\Adapter\FileCache;
 use Waffle\Commons\Cache\Adapter\RedisCache;
@@ -28,6 +29,14 @@ use Waffle\Commons\Contracts\Data\Connection\ConnectionTrackerInterface;
 final class CacheFactory
 {
     /**
+     * RFC-023 §3.2: on its own, Predis waits 5 s to connect and PHP's
+     * `default_socket_timeout` (60 s) to read, so the cache's `/readyz` check could
+     * outlast the readiness probe. Both default to 1 s here; a DSN that sets its own
+     * (`?timeout=…&read_write_timeout=…`) keeps them.
+     */
+    public const float REDIS_TIMEOUT = 1.0;
+
+    /**
      * @param ?ConnectionTrackerInterface $tracker DIAG-03 tracer forwarded to the Redis
      *        adapter so its worker-resident connection is surfaced (dev only; null = off).
      */
@@ -39,7 +48,8 @@ final class CacheFactory
      * @param array<string, mixed> $options Adapter-specific configuration.
      *   - array  : `default_ttl?: int`
      *   - file   : `directory: string` (required), `default_ttl?: int`
-     *   - redis  : `dsn?: string` (defaults to redis://localhost:6379),
+     *   - redis  : `dsn?: string` (defaults to redis://localhost:6379; connect and
+     *              read/write time out after 1 s unless the DSN sets them),
      *              `prefix?: string`, `default_ttl?: int`
      *
      * @throws CacheBackendUnavailableException When a backend cannot be instantiated
@@ -80,7 +90,12 @@ final class CacheFactory
     private function createRedis(array $options): RedisCache
     {
         $dsn = $options['dsn'] ?? null;
-        $parameters = is_string($dsn) && $dsn !== '' ? $dsn : null;
+        $parsed = is_string($dsn) && $dsn !== '' ? Parameters::parse($dsn) : [];
+        $parameters = (is_array($parsed) ? $parsed : [])
+        + [
+            'timeout' => self::REDIS_TIMEOUT,
+            'read_write_timeout' => self::REDIS_TIMEOUT,
+        ];
         $prefixOption = $options['prefix'] ?? null;
         $prefix = is_string($prefixOption) && $prefixOption !== '' ? $prefixOption : 'waffle:cache:';
 
