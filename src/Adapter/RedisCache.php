@@ -6,6 +6,7 @@ namespace Waffle\Commons\Cache\Adapter;
 
 use DateInterval;
 use DateTimeImmutable;
+use IgorPhp\IgorBundle\Attribute\WorkerSafe;
 use Predis\Client as PredisClient;
 use Predis\PredisException;
 use Throwable;
@@ -40,6 +41,9 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
     use StampedeAwareTrait;
 
     public function __construct(
+        #[WorkerSafe(
+            reason: 'shared Redis connection: set()/setex() write through it to the backend; the property is readonly',
+        )]
         private PredisClient $client,
         private string $prefix = 'waffle:cache:',
         private ?int $defaultTtl = null,
@@ -245,6 +249,9 @@ final readonly class RedisCache implements CacheInterface, StampedeProtectionInt
         ];
     }
 
+    #[WorkerSafe(
+        reason: 'writes the entry through the shared Redis connection to the backend; no worker memory is mutated',
+    )]
     private function writeEntry(string $key, mixed $value, ?int $ttlSeconds, float $delta): bool
     {
         try {

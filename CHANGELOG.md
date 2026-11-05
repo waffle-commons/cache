@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Released in lockstep with the Waffle Commons umbrella tag.
 
+## [0.1.0-beta7] — 2026-11
+
+**Theme: readiness probe (OPS-01).**
+
+### Added
+- `Health\CacheHealthCheck` (OPS-01, RFC-023 §3.3) — the `/readyz` probe for a cache backend: one `has()` on a fixed key, a single read round trip and never a write. A Redis-backed cache that cannot reach Redis is reported down with the reason, never thrown. Not critical by default; an application that cannot serve without its cache makes it critical or lists it in `waffle.health.required`.
+
+### Changed
+- **The Redis adapter gives up after 1 s (RFC-023 §3.2).** `CacheFactory` gave Predis the DSN as is, so it waited 5 s to connect and PHP's `default_socket_timeout` (60 s) to read: the cache's `/readyz` check could outlast the readiness probe, and a stalled Redis held a worker. Predis now connects and reads within `CacheFactory::REDIS_TIMEOUT` (1 s) unless the DSN sets its own `timeout` or `read_write_timeout`. Measured against an address that never answers: 1.01 s, where `?timeout=5` (the previous behaviour) takes 5.01 s.
+
 ## [0.1.0-beta6] — 2026-09
 
 **Theme: documentation.**

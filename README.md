@@ -10,10 +10,16 @@
 Waffle Cache Component
 ======================
 
-> **Release:** `0.1.0-beta6` &nbsp;|&nbsp; [`CHANGELOG.md`](./CHANGELOG.md)
+> **Release:** `0.1.0-beta7` &nbsp;|&nbsp; [`CHANGELOG.md`](./CHANGELOG.md)
 > **PSR Compliance:** PSR-6 (`Psr\Cache`) + PSR-16 (`Psr\SimpleCache`)
 
 PSR-6 and PSR-16 compliant cache implementation for the Waffle Framework. Designed for FrankenPHP resident worker mode — every adapter is stateless across requests, fail-secure, and zero-baseline under Mago static analysis.
+
+## 🆕 Beta-7 — readiness probe and a 1 s Redis timeout (OPS-01)
+
+- **`Health\CacheHealthCheck`** is the `/readyz` probe for a cache backend: one `has()` on a fixed key, a single read round trip and never a write. A Redis-backed cache that cannot reach Redis is reported down with the reason, never thrown. It is not critical by default; an application that cannot serve without its cache makes it critical or lists it in `waffle.health.required`.
+- **The Redis adapter gives up after 1 s.** `CacheFactory` has Predis connect and read within `CacheFactory::REDIS_TIMEOUT` (1 s) unless the DSN sets its own `timeout` or `read_write_timeout`. Against an address that never answers: 1.01 s, where Predis's own default took 5.01 s.
+- `RedisCache` still throws `CacheBackendUnavailableException` when Redis cannot be reached, and each caller decides how to degrade: the router treats it as a cache miss at boot (`waffle-commons/routing` `0.1.0-beta7`).
 
 ## 📦 Installation
 
@@ -90,6 +96,7 @@ PHPUnit 11+ suite targets `>= 95%` line coverage.
 Central framework docs live in the [waffle-commons/documentation](https://github.com/waffle-commons/documentation) repository:
 
 - Reference: [cache](https://github.com/waffle-commons/documentation/blob/main/reference/cache.md)
+- How-to: [Run on Kubernetes](https://github.com/waffle-commons/documentation/blob/main/how-to/run-on-kubernetes.md) (the readiness probe)
 
 ## 🤝 Contributing
 

@@ -6,11 +6,15 @@ namespace WaffleTests\Commons\Cache\Factory;
 
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Predis\Client as PredisClient;
+use Predis\Connection\NodeConnectionInterface;
+use ReflectionProperty;
 use Waffle\Commons\Cache\Adapter\ArrayCache;
 use Waffle\Commons\Cache\Adapter\FileCache;
 use Waffle\Commons\Cache\Adapter\RedisCache;
 use Waffle\Commons\Cache\Exception\CacheBackendUnavailableException;
 use Waffle\Commons\Cache\Factory\CacheFactory;
+use Waffle\Commons\Contracts\Cache\CacheInterface;
 use Waffle\Commons\Contracts\Cache\Constant;
 use WaffleTests\Commons\Cache\AbstractTestCase;
 
@@ -88,6 +92,66 @@ final class CacheFactoryTest extends AbstractTestCase
             'default_ttl' => 120,
         ]);
         static::assertInstanceOf(RedisCache::class, $cache);
+    }
+
+    /**
+     * RFC-023 §3.2: the cache's /readyz check must give up before the readiness probe does, so the
+     * Predis client connects and reads within one second unless the DSN says otherwise.
+     */
+    public function testRedisAdapterTimesOutWithinASecondByDefault(): void
+    {
+        $parameters = self::redisParameters(new CacheFactory()->create(Constant::BACKEND_REDIS, [
+            'dsn' => 'redis://:secret@waffle-redis:6380',
+        ]));
+
+        static::assertSame(CacheFactory::REDIS_TIMEOUT, $parameters['timeout'] ?? null);
+        static::assertSame(CacheFactory::REDIS_TIMEOUT, $parameters['read_write_timeout'] ?? null);
+        static::assertSame('waffle-redis', $parameters['host'] ?? null);
+        static::assertSame(6380, $parameters['port'] ?? null);
+        static::assertSame('secret', $parameters['password'] ?? null);
+    }
+
+    public function testATimeoutTheDsnSetsIsKept(): void
+    {
+        $parameters = self::redisParameters(new CacheFactory()->create(Constant::BACKEND_REDIS, [
+            'dsn' => 'redis://waffle-redis:6379?timeout=3&read_write_timeout=4',
+        ]));
+
+        static::assertSame('3', $parameters['timeout'] ?? null);
+        static::assertSame('4', $parameters['read_write_timeout'] ?? null);
+    }
+
+    public function testWithoutADsnTheTimeoutsStillApply(): void
+    {
+        $parameters = self::redisParameters(new CacheFactory()->create(Constant::BACKEND_REDIS, []));
+
+        static::assertSame(CacheFactory::REDIS_TIMEOUT, $parameters['timeout'] ?? null);
+        static::assertSame(CacheFactory::REDIS_TIMEOUT, $parameters['read_write_timeout'] ?? null);
+    }
+
+    /**
+     * The connection parameters of the Predis client a Redis cache holds.
+     *
+     * @return array<string, scalar|null>
+     */
+    private static function redisParameters(CacheInterface $cache): array
+    {
+        static::assertInstanceOf(RedisCache::class, $cache);
+        $client = new ReflectionProperty(RedisCache::class, 'client')->getValue($cache);
+        static::assertInstanceOf(PredisClient::class, $client);
+        $connection = $client->getConnection();
+        static::assertInstanceOf(NodeConnectionInterface::class, $connection);
+
+        $all = $connection->getParameters()->toArray();
+        static::assertIsArray($all);
+        $parameters = [];
+        foreach ($all as $name => $value) {
+            if (is_string($name) && (is_scalar($value) || $value === null)) {
+                $parameters[$name] = $value;
+            }
+        }
+
+        return $parameters;
     }
 
     public function testUnknownAdapterRejected(): void

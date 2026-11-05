@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Waffle\Commons\Cache\Pool;
 
+use IgorPhp\IgorBundle\Attribute\WorkerSafe;
 use Psr\Cache\CacheItemInterface;
 use Waffle\Commons\Cache\KeyValidator;
 use Waffle\Commons\Contracts\Cache\CacheInterface;
@@ -25,9 +26,16 @@ final class CachePool implements CacheItemPoolInterface, ResettableInterface
     private array $deferred = [];
 
     public function __construct(
+        #[WorkerSafe(
+            reason: 'write-through to the injected PSR-16 backend; the property is readonly and never reassigned',
+        )]
         private readonly CacheInterface $store,
     ) {}
 
+    #[WorkerSafe(
+        scope: 'classic-sapi-fallback',
+        reason: 'in worker mode reset() flushes deferred writes at the end of every request; the destructor only covers FPM/CLI lifecycles',
+    )]
     public function __destruct()
     {
         if ($this->deferred !== []) {
