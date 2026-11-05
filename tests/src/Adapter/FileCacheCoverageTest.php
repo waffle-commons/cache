@@ -127,7 +127,15 @@ final class FileCacheCoverageTest extends AbstractTestCase
             ttl: 2,
         );
 
-        $second = $cache->compute('key', static fn(): string => 'v2', ttl: 60, beta: 1000.0);
+        // XFetch draws r = mt_rand() / mt_getrandmax(). Seed 1 gives r ≈ 0.417, so the
+        // jitter (≈ 0.1 s × 1000 × 0.875 ≈ 87 s) always exceeds the remaining TTL
+        // (≤ 2 s). Unseeded, r > 0.98 kept the entry in about 2 % of the runs.
+        mt_srand(1);
+        try {
+            $second = $cache->compute('key', static fn(): string => 'v2', ttl: 60, beta: 1000.0);
+        } finally {
+            mt_srand();
+        }
 
         static::assertSame('v1', $first);
         static::assertSame('v2', $second);
