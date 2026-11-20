@@ -14,7 +14,7 @@ Released in lockstep with the Waffle Commons umbrella tag.
 
 ### Changed
 - **Breaking:** requires `predis/predis` `^3.7.1` (was `^2.4`). An application that pins `predis/predis` `^2` must move to `^3.7.1`.
-- CI: TruffleHog v3.100.0, pinned with its `version:` input, and igor-php 0.11.0, pinned for every step of the igor job.
+- CI: TruffleHog v3.100.0 (pinned with its `version:` input), igor-php 0.11.0 (pinned for every step of the igor job), Composer 2.11.2 and the Codecov CLI v11.3.2, each a fixed release.
 - Development dependencies: PHPUnit 12.5.45, psalm 6.20.13 and igor-php `^0.11.0`. `phpunit.xml` drops `cacheResult`, the PHPUnit 12.5 default.
 - `igor.json`: `Psr\` is back among the safe namespaces, which igor's own defaults include.
 
